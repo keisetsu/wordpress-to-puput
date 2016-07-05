@@ -243,7 +243,10 @@ class Command(LabelCommand):
 
     def _import_image(self, image_url):
         image = NamedTemporaryFile(delete=True)
-        response = requests.get(image_url)
+        try:
+            response = requests.get(image_url)
+        except requests.exceptions.ConnectionError:
+            return False
         if response.status_code == 200:
             image.write(response.content)
             image.flush()
@@ -285,5 +288,8 @@ class Command(LabelCommand):
                         else:
                             parent_node.append(ET.XML(self._image_to_embed(new_image)))
                             img_node.drop_tag()
+                    else:
+                        print(img_node.attrib.get('src'))
+                        parent_node.addnext(ET.XML('<pre>Image missing: {}</pre>'.format(img_node.attrib.get('src'))))
             content = ET.tostring(root)
         return content
